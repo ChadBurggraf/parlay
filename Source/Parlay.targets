@@ -5,6 +5,7 @@
 
   <PropertyGroup>
     <ArtifactsDir>$(RootDir)\Artifacts</ArtifactsDir>
+    <BuildDir>$(RootDir)\Build</BuildDir>
     <KeyFileArgs Condition="'$(SignAssembly)' == 'true' And Exists('$(AssemblyOriginatorKeyFile)')">/keyfile:"$(AssemblyOriginatorKeyFile)"</KeyFileArgs>
     <LibDir>$(RootDir)\Lib</LibDir>
     <SourceDir>$(RootDir)\Source</SourceDir>

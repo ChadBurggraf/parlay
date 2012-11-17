@@ -2,5 +2,7 @@
 [Bb]in/
 [Bb]uild/
 [Oo]bj/
+*.snk
 *.suo
+*.user
 StyleCop.Cache

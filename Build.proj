@@ -1,0 +1,41 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration>Release</Configuration>
+    <RootDir>$(MSBuildThisFileDirectory)</RootDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(RootDir)\Parlay.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('$(AssemblyOriginatorKeyFile)') And '$(Configuration)' == 'Release'">
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
+  <Import Project="Source\Parlay.targets" />
+
+  <ItemGroup>
+    <PackageFiles Include="$(RootDir)\LICENSE.txt" />
+    <PackageFiles Include="$(RootDir)\README.md" />
+  </ItemGroup>
+
+  <Target Name="Build" DependsOnTargets="FxCop">
+    <MakeDir Directories="$(BuildDir)" />
+    <MSBuild Projects="$(SourceDir)\Parlay\Parlay.csproj" Targets="Clean;Build" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(AssemblyOriginatorKeyFile)" />
+    <ItemGroup>
+      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.dll" />
+      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.pdb" />
+      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.xml" />
+    </ItemGroup>
+    <Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(BuildDir)" />
+  </Target>
+
+  <Target Name="Clean">
+    <ItemGroup>
+      <CleanFiles Include="$(BuildDir)\**\*" />
+    </ItemGroup>
+    <Delete Files="@(CleanFiles)" />
+    <RemoveDir Directories="$(BuildDir)" />
+    <MSBuild Projects="@(SolutionProjects)" Targets="Clean" Properties="Configuration=$(Configuration)" />
+  </Target>
+</Project>

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Parlay</id>
+    <version>1.0.0</version>
+    <title>Parlay</title>
+    <authors>Chad Burggraf</authors>
+    <owners>Chad Burggraf</owners>
+    <licenseUrl>http://opensource.org/licenses/mit-license.php/</licenseUrl>
+    <projectUrl>https://github.com/ChadBurggraf/parlay</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Queued + cached HTTP download library.</description>
+    <releaseNotes>
+      * 1.0.0 - Initial release.
+    </releaseNotes>
+    <copyright>Copyright 2012 Chad Burggraf</copyright>
+    <tags>async download image http</tags>
+  </metadata>
+  <files>
+    <file src="Build\LICENSE.txt" target=""/>
+    <file src="Build\README.md" target=""/>
+    <file src="Build\Parlay.*" target="lib\net40-full"/>
+  </files>
+</package>

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>$(RootDir)\Parlay.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>$(RootDir)Parlay.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="Exists('$(AssemblyOriginatorKeyFile)') And '$(Configuration)' == 'Release'">
@@ -15,19 +15,22 @@
   <Import Project="Source\Parlay.targets" />
 
   <ItemGroup>
-    <PackageFiles Include="$(RootDir)\LICENSE.txt" />
-    <PackageFiles Include="$(RootDir)\README.md" />
+    <PackageFiles Include="$(RootDir)LICENSE.txt" />
+    <PackageFiles Include="$(RootDir)README.md" />
   </ItemGroup>
 
   <Target Name="Build" DependsOnTargets="FxCop">
     <MakeDir Directories="$(BuildDir)" />
-    <MSBuild Projects="$(SourceDir)\Parlay\Parlay.csproj" Targets="Clean;Build" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(AssemblyOriginatorKeyFile)" />
+    <MSBuild Projects="$(SourceDir)Parlay\Parlay.csproj" Targets="Clean;Build" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(AssemblyOriginatorKeyFile)" />
     <ItemGroup>
-      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.dll" />
-      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.pdb" />
-      <OutputFiles Include="$(SourceDir)\Parlay\bin\$(Configuration)\Parlay.xml" />
+      <OutputFiles Include="$(RootDir)LICENSE.txt" />
+      <OutputFiles Include="$(RootDir)README.md" />
+      <OutputFiles Include="$(SourceDir)Parlay\bin\$(Configuration)\Parlay.dll" />
+      <OutputFiles Include="$(SourceDir)Parlay\bin\$(Configuration)\Parlay.pdb" />
+      <OutputFiles Include="$(SourceDir)Parlay\bin\$(Configuration)\Parlay.xml" />
     </ItemGroup>
     <Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(BuildDir)" />
+    <CallTarget Targets="NuGet" />
   </Target>
 
   <Target Name="Clean">
@@ -37,5 +40,11 @@
     <Delete Files="@(CleanFiles)" />
     <RemoveDir Directories="$(BuildDir)" />
     <MSBuild Projects="@(SolutionProjects)" Targets="Clean" Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <Target Name="NuGet" DependsOnTargets="GetVersion">
+    <Exec Command='NuGet Pack "$(RootDir)Parlay.nuspec"'/>
+    <Copy SourceFiles="$(RootDir)Parlay.$(Major).$(Minor).$(Build).nupkg" DestinationFolder="$(BuildDir)" />
+    <Delete Files="$(RootDir)Parlay.$(Major).$(Minor).$(Build).nupkg" />
   </Target>
 </Project>

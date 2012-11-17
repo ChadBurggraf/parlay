@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <RootDir Condition="'$(RootDir)' == ''">$(MSBuildThisFileDirectory)\..</RootDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ArtifactsDir>$(RootDir)\Artifacts</ArtifactsDir>
+    <KeyFileArgs Condition="'$(SignAssembly)' == 'true' And Exists('$(AssemblyOriginatorKeyFile)')">/keyfile:"$(AssemblyOriginatorKeyFile)"</KeyFileArgs>
+    <LibDir>$(RootDir)\Lib</LibDir>
+    <SourceDir>$(RootDir)\Source</SourceDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SolutionProjects Include="$(SourceDir)\Parlay\Parlay.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildExtensionsPath32)\StyleCop\v4.7\StyleCop.Targets" />
+  <UsingTask TaskName="FxCop" AssemblyFile="$(LibDir)\FxCopTask.1.0.1\FxCopTask.dll" />
+
+  <Target Name="FxCop">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Clean;Build" Properties="Configuration=Debug"/>
+
+    <ItemGroup>
+      <FxCopAssemblies Include="$(SourceDir)\Parlay\bin\Debug\Parlay.dll"/>
+    </ItemGroup>
+
+    <MakeDir Directories="$(ArtifactsDir)"/>
+    <FxCop Assemblies="@(FxCopAssemblies)" RuleSet="$(SourceDir)\Parlay.ruleset" Output="$(ArtifactsDir)\FxCop.xml"/>
+  </Target>
+</Project>

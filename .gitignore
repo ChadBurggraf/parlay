@@ -1,0 +1,6 @@
+[Aa]rtifacts/
+[Bb]in/
+[Bb]uild/
+[Oo]bj/
+*.suo
+StyleCop.Cache

@@ -10,6 +10,7 @@ namespace Parlay
     using System.Collections.Generic;
     using System.Data;
     using System.Data.SQLite;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using Dapper;
@@ -83,76 +84,20 @@ FROM [ParlayStatistics];";
         /// </summary>
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
-        public void Add(string key, Stream content)
+        public void AddContent(string key, Stream content)
         {
-            if (string.IsNullOrEmpty(key))
-            {
-                throw new ArgumentNullException("key", "key must contain a value.");
-            }
+            this.AddContentImpl(key, content, null);
+        }
 
-            if (content == null)
-            {
-                throw new ArgumentNullException("content", "content cannot be null.");
-            }
-
-            if (!content.CanRead)
-            {
-                throw new ArgumentException("content must be a readable stream.", "content");
-            }
-
-            const string Sql =
-@"INSERT INTO [ParlayItem]([FirstAccessDate],[Key],[LastAccessDate],[Size])
-VALUES(@FirstAccessDate,@Key,@LastAccessDate,@Size);
-
-UPDATE [ParlayStatistics]
-SET
-    [ItemCount] = [ItemCount] + 1,
-    [Size] = [Size] + @Size;
-
-SELECT *
-FROM [ParlayStatistics];";
-
-            DateTime now = DateTime.UtcNow;
-
-            CacheItem item = new CacheItem()
-            {
-                FirstAccessDate = now,
-                Key = key.ToUpperInvariant(),
-                LastAccessDate = now,
-                Size = content.Length
-            };
-
-            using (IDbConnection connection = this.CreateAndOpenConnection())
-            {
-                using (IDbTransaction transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        lock (this.syncRoot)
-                        {
-                            this.Remove(item.Key, connection, transaction);
-
-                            CacheStatistics stats = connection.Query<CacheStatistics>(Sql, item, transaction).First();
-                            this.StoreContent(item.Key, content);
-
-                            this.itemCount = stats.ItemCount;
-                            this.size = stats.Size;
-
-                            if (this.maxSize > 0)
-                            {
-                                this.EvictToSize(this.maxSize, connection, transaction);
-                            }
-
-                            transaction.Commit();
-                        }
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-            }
+        /// <summary>
+        /// Adds an item to the cache.
+        /// </summary>
+        /// <param name="key">The cache key.</param>
+        /// <param name="content">The content of the item to add.</param>
+        /// <param name="expires">The date the content expires.</param>
+        public void AddContent(string key, Stream content, DateTime expires)
+        {
+            this.AddContentImpl(key, content, expires);
         }
 
         /// <summary>
@@ -186,6 +131,7 @@ FROM [ParlayStatistics];";
                         {
                             lock (this.syncRoot)
                             {
+                                this.EvictExpired(connection, transaction);
                                 this.EvictToSize(maxSize, connection, transaction);
                                 transaction.Commit();
                             }
@@ -206,18 +152,25 @@ FROM [ParlayStatistics];";
         /// </summary>
         /// <param name="key">The key of the item to get.</param>
         /// <returns>A <see cref="Stream"/> of item content, or null if none is found.</returns>
-        public Stream Get(string key)
+        public Stream GetContent(string key)
         {
             Stream content = null;
             CacheItem item = this.GetItem(key, null);
 
             if (item != null)
             {
-                content = this.GetContent(item.Key);
-
-                if (content == null)
+                if (item.ExpireDate == null || item.ExpireDate > DateTime.UtcNow)
                 {
-                    this.Remove(key);
+                    content = this.GetStoredContent(item.Key);
+
+                    if (content == null)
+                    {
+                        this.RemoveContent(key);
+                    }
+                }
+                else
+                {
+                    this.RemoveContent(key);
                 }
             }
 
@@ -228,7 +181,7 @@ FROM [ParlayStatistics];";
         /// Removes an item from the cache.
         /// </summary>
         /// <param name="key">The item's network identifier.</param>
-        public void Remove(string key)
+        public void RemoveContent(string key)
         {
             using (IDbConnection connection = this.CreateAndOpenConnection())
             {
@@ -238,7 +191,7 @@ FROM [ParlayStatistics];";
                     {
                         lock (this.syncRoot)
                         {
-                            this.Remove(key, connection, transaction);
+                            this.RemoveContent(key, connection, transaction);
                             transaction.Commit();
                         }
                     }
@@ -255,6 +208,7 @@ FROM [ParlayStatistics];";
         /// Gets the schema to use for a SQLite cache.
         /// </summary>
         /// <returns>The schema definition.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Performance.")]
         protected static string GetSchema()
         {
             Stream stream = null;
@@ -279,6 +233,85 @@ FROM [ParlayStatistics];";
         }
 
         /// <summary>
+        /// Adds an item to the cache.
+        /// </summary>
+        /// <param name="key">The cache key.</param>
+        /// <param name="content">The content of the item to add.</param>
+        /// <param name="expires">The date the content expires, if applicable.</param>
+        protected void AddContentImpl(string key, Stream content, DateTime? expires)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException("key", "key must contain a value.");
+            }
+
+            if (content == null)
+            {
+                throw new ArgumentNullException("content", "content cannot be null.");
+            }
+
+            if (!content.CanRead)
+            {
+                throw new ArgumentException("content must be a readable stream.", "content");
+            }
+
+            const string Sql =
+@"INSERT INTO [ParlayItem]([ExpireDate],[FirstAccessDate],[Key],[LastAccessDate],[Size])
+VALUES(@ExpireDate,@FirstAccessDate,@Key,@LastAccessDate,@Size);
+
+UPDATE [ParlayStatistics]
+SET
+    [ItemCount] = [ItemCount] + 1,
+    [Size] = [Size] + @Size;
+
+SELECT *
+FROM [ParlayStatistics];";
+
+            DateTime now = DateTime.UtcNow;
+
+            CacheItem item = new CacheItem()
+            {
+                ExpireDate = expires,
+                FirstAccessDate = now,
+                Key = key.ToUpperInvariant(),
+                LastAccessDate = now,
+                Size = content.Length
+            };
+
+            using (IDbConnection connection = this.CreateAndOpenConnection())
+            {
+                using (IDbTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        lock (this.syncRoot)
+                        {
+                            this.RemoveContent(item.Key, connection, transaction);
+
+                            CacheStatistics stats = connection.Query<CacheStatistics>(Sql, item, transaction).First();
+                            this.StoreContent(item.Key, content);
+
+                            this.itemCount = stats.ItemCount;
+                            this.size = stats.Size;
+
+                            if (this.maxSize > 0)
+                            {
+                                this.EvictToSize(this.maxSize, connection, transaction);
+                            }
+
+                            transaction.Commit();
+                        }
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Creates an opens a <see cref="SQLiteConnection"/> to use for accessing cache information.
         /// </summary>
         /// <returns>A new <see cref="SQLiteConnection"/>.</returns>
@@ -288,14 +321,14 @@ FROM [ParlayStatistics];";
         /// Deletes the stored content identified by the given key.
         /// </summary>
         /// <param name="key">The key identifying the content to delete.</param>
-        protected abstract void DeleteContent(string key);
+        protected abstract void DeleteStoredContent(string key);
 
         /// <summary>
         /// Gets the stored content for the given key
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected abstract Stream GetContent(string key);
+        protected abstract Stream GetStoredContent(string key);
 
         /// <summary>
         /// Removes an item from the cache.
@@ -303,7 +336,7 @@ FROM [ParlayStatistics];";
         /// <param name="key">The item's network identifier.</param>
         /// <param name="connection">The <see cref="IDbConnection"/> to use.</param>
         /// <param name="transaction">The <see cref="IDbTransaction"/> to use.</param>
-        protected void Remove(string key, IDbConnection connection, IDbTransaction transaction)
+        protected void RemoveContent(string key, IDbConnection connection, IDbTransaction transaction)
         {
             CacheItem item = this.GetItem(key, null);
 
@@ -314,7 +347,7 @@ FROM [ParlayStatistics];";
                         new { Key = item.Key, Size = item.Size },
                         transaction).First();
 
-                this.DeleteContent(item.Key);
+                this.DeleteStoredContent(item.Key);
 
                 this.itemCount = stats.ItemCount;
                 this.size = stats.Size;
@@ -371,6 +404,52 @@ FROM [ParlayStatistics];";
         }
 
         /// <summary>
+        /// Evicts all expired items from the cache.
+        /// </summary>
+        /// <param name="connection">The <see cref="IDbConnection"/> to use.</param>
+        /// <param name="transaction">The <see cref="IDbTransaction"/> to use.</param>
+        protected void EvictExpired(IDbConnection connection, IDbTransaction transaction)
+        {
+            const string Sql =
+@"SELECT
+    [Key],
+    [Size]
+FROM [ParlayItem]
+WHERE
+    [ExpireDate] IS NOT NULL
+    AND [ExpireDate] < @Now
+LIMIT 100;";
+
+            CacheStatistics stats = null;
+
+            while (true)
+            {
+                CacheItem[] items = connection.Query<CacheItem>(Sql, new { Now = DateTime.UtcNow }, transaction).ToArray();
+
+                foreach (CacheItem item in items)
+                {
+                    stats = connection.Query<CacheStatistics>(
+                        SqliteCache.RemoveSql,
+                        new { Key = item.Key, Size = item.Size },
+                        transaction).First();
+
+                    this.DeleteStoredContent(item.Key);
+                }
+
+                if (items.Length == 0)
+                {
+                    break;
+                }
+            }
+
+            if (stats != null)
+            {
+                this.itemCount = stats.ItemCount;
+                this.size = stats.Size;
+            }
+        }
+
+        /// <summary>
         /// Evicts items from the cache until the total cache size is smaller
         /// than or equal to the given maximum size, in bytes.
         /// </summary>
@@ -385,7 +464,7 @@ FROM [ParlayStatistics];";
     [Size]
 FROM [ParlayItem]
 ORDER BY [LastAccessDate]
-LIMIT 10;";
+LIMIT 100;";
 
             if (maxSize < 0)
             {
@@ -405,7 +484,7 @@ LIMIT 10;";
                             new { Key = item.Key, Size = item.Size },
                             transaction).First();
 
-                        this.DeleteContent(item.Key);
+                        this.DeleteStoredContent(item.Key);
 
                         if (stats.Size <= maxSize)
                         {

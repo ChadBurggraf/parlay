@@ -43,7 +43,7 @@ namespace Parlay
 
             this.path = path;
             this.databasePath = System.IO.Path.Combine(path, "Parlay.sqlite");
-            this.connectionString = string.Format(CultureInfo.InvariantCulture, "Data Source={0};Journal Mode=Off;Synchronous=Off;Version=3", this.databasePath);
+            this.connectionString = string.Format(CultureInfo.InvariantCulture, "Data Source={0};DateTimeKind=Utc;Journal Mode=Off;Synchronous=Off;Version=3", this.databasePath);
 
             if (!Directory.Exists(path))
             {
@@ -65,7 +65,7 @@ namespace Parlay
         /// <returns>A new <see cref="SQLiteConnection"/>.</returns>
         protected override SQLiteConnection CreateAndOpenConnection()
         {
-            SQLiteConnection connection;
+            SQLiteConnection connection = null;
 
             if (!File.Exists(this.databasePath))
             {
@@ -74,18 +74,32 @@ namespace Parlay
                     connection.Open();
                     connection.Execute(SqliteCache.GetSchema());
                 }
+
+                connection = null;
             }
 
-            connection = new SQLiteConnection(this.connectionString);
-            connection.Open();
-            return connection;
+            try
+            {
+                connection = new SQLiteConnection(this.connectionString);
+                connection.Open();
+                return connection;
+            }
+            catch
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
         /// Deletes the stored content identified by the given key.
         /// </summary>
         /// <param name="key">The key identifying the content to delete.</param>
-        protected override void DeleteContent(string key)
+        protected override void DeleteStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -105,7 +119,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected override Stream GetContent(string key)
+        protected override Stream GetStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {

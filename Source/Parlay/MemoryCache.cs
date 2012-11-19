@@ -9,6 +9,7 @@ namespace Parlay
     using System;
     using System.Collections.Specialized;
     using System.Data.SQLite;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using Dapper;
     
@@ -17,7 +18,8 @@ namespace Parlay
     /// </summary>
     public sealed class MemoryCache : SqliteCache
     {
-        private const string ConnectionString = "FullUri=file::memory:?cache=shared;Journal Mode=Off;Synchronous=Off;Version=3";
+        private const string ConnectionString = "FullUri=file::memory:?cache=shared;DateTimeKind=Utc;Journal Mode=Off;Synchronous=Off;Version=3";
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields", Justification = "Keeps the shared in-memory database alive.")]
         private static readonly SQLiteConnection DefaultConnection = MemoryCache.CreateAndOpenDefaultConnection();
         private static readonly HybridDictionary ContentStore = new HybridDictionary();
 
@@ -44,16 +46,30 @@ namespace Parlay
         /// <returns>A new <see cref="SQLiteConnection"/>.</returns>
         protected override SQLiteConnection CreateAndOpenConnection()
         {
-            SQLiteConnection connection = new SQLiteConnection(MemoryCache.ConnectionString);
-            connection.Open();
-            return connection;
+            SQLiteConnection connection = null;
+
+            try
+            {
+                connection = new SQLiteConnection(MemoryCache.ConnectionString);
+                connection.Open();
+                return connection;
+            }
+            catch
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
         /// Deletes the stored content identified by the given key.
         /// </summary>
         /// <param name="key">The key identifying the content to delete.</param>
-        protected override void DeleteContent(string key)
+        protected override void DeleteStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -68,7 +84,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected override Stream GetContent(string key)
+        protected override Stream GetStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -117,10 +133,24 @@ namespace Parlay
 
         private static SQLiteConnection CreateAndOpenDefaultConnection()
         {
-            SQLiteConnection connection = new SQLiteConnection(MemoryCache.ConnectionString);
-            connection.Open();
-            connection.Execute(SqliteCache.GetSchema());
-            return connection;
+            SQLiteConnection connection = null;
+
+            try
+            {
+                connection = new SQLiteConnection(MemoryCache.ConnectionString);
+                connection.Open();
+                connection.Execute(SqliteCache.GetSchema());
+                return connection;
+            }
+            catch
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
+
+                throw;
+            }
         }
     }
 }

@@ -70,6 +70,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SqliteCache.Schema.sql" />
+    <CodeAnalysisDictionary Include="..\CodeAnalysisDictionary.xml">
+      <Link>CodeAnalysisDictionary.xml</Link>
+    </CodeAnalysisDictionary>
     <Content Include="x64\SQLite.Interop.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

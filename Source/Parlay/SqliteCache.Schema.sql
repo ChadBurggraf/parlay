@@ -12,6 +12,7 @@ VALUES(0,0);
 
 CREATE TABLE [ParlayItem]
 (
+	[ExpireDate] DATETIME NULL,
 	[FirstAccessDate] DATETIME NOT NULL,
 	[Key] TEXT NOT NULL PRIMARY KEY,
 	[LastAccessDate] DATETIME NOT NULL,

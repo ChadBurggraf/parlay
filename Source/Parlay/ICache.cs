@@ -29,7 +29,15 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
-        void Add(string key, Stream content);
+        void AddContent(string key, Stream content);
+
+        /// <summary>
+        /// Adds an item to the cache.
+        /// </summary>
+        /// <param name="key">The cache key.</param>
+        /// <param name="content">The content of the item to add.</param>
+        /// <param name="expires">The date the content expires.</param>
+        void AddContent(string key, Stream content, DateTime expires);
 
         /// <summary>
         /// Evicts items from the cache until the total cache size is smaller
@@ -44,12 +52,12 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key of the item to get.</param>
         /// <returns>A <see cref="Stream"/> of item content, or null if none is found.</returns>
-        Stream Get(string key);
+        Stream GetContent(string key);
 
         /// <summary>
         /// Removes an item from the cache.
         /// </summary>
         /// <param name="key">The item's network identifier.</param>
-        void Remove(string key);
+        void RemoveContent(string key);
     }
 }

@@ -27,7 +27,44 @@ namespace Parlay
             {
                 using (SHA1CryptoServiceProvider hashAlgorithm = new SHA1CryptoServiceProvider())
                 {
-                    return BitConverter.ToString(hashAlgorithm.ComputeHash(Encoding.Unicode.GetBytes(value))).Replace("-", string.Empty);
+                    return hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(value)).ToHex();
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Normalizes the given <see cref="DateTime"/> to UTC.
+        /// </summary>
+        /// <param name="value">The <see cref="DateTime"/> to normalize.</param>
+        /// <returns>The normalized <see cref="DateTime"/>.</returns>
+        public static DateTime NormalizeToUtc(this DateTime value)
+        {
+            return NormalizeToUtc(value as DateTime?).Value;
+        }
+
+        /// <summary>
+        /// Normalizes the given <see cref="DateTime"/> to UTC.
+        /// </summary>
+        /// <param name="value">The <see cref="DateTime"/> to normalize.</param>
+        /// <returns>The normalized <see cref="DateTime"/>.</returns>
+        public static DateTime? NormalizeToUtc(this DateTime? value)
+        {
+            if (value != null)
+            {
+                switch (value.Value.Kind)
+                {
+                    case DateTimeKind.Local:
+                        value = value.Value.ToUniversalTime();
+                        break;
+                    case DateTimeKind.Unspecified:
+                        value = new DateTime(value.Value.Ticks, DateTimeKind.Utc);
+                        break;
+                    case DateTimeKind.Utc:
+                        break;
+                    default:
+                        throw new NotImplementedException();
                 }
             }
 

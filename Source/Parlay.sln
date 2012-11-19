@@ -6,6 +6,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C4C35276-D8AA-4B60-A6E8-58BA75A7FD4F}"
 	ProjectSection(SolutionItems) = preProject
 		..\Build.proj = ..\Build.proj
+		CodeAnalysisDictionary.xml = CodeAnalysisDictionary.xml
 		..\LICENSE.txt = ..\LICENSE.txt
 		..\Parlay.nuspec = ..\Parlay.nuspec
 		Parlay.targets = Parlay.targets

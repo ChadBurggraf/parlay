@@ -13,10 +13,26 @@ namespace Parlay
     /// </summary>
     public sealed class CacheItem
     {
+        private DateTime? expireDate;
+        private DateTime firstAccessDate, lastAccessDate;
+
+        /// <summary>
+        /// Gets or sets the date the item expires, if applicable.
+        /// </summary>
+        public DateTime? ExpireDate
+        {
+            get { return this.expireDate; }
+            set { this.expireDate = value.NormalizeToUtc(); }
+        }
+
         /// <summary>
         /// Gets or sets the date the item was first accessed.
         /// </summary>
-        public DateTime FirstAccessDate { get; set; }
+        public DateTime FirstAccessDate
+        {
+            get { return this.firstAccessDate; }
+            set { this.firstAccessDate = value.NormalizeToUtc(); }
+        }
 
         /// <summary>
         /// Gets or sets the item's key.
@@ -26,7 +42,11 @@ namespace Parlay
         /// <summary>
         /// Gets or sets the date the item was last accessed.
         /// </summary>
-        public DateTime LastAccessDate { get; set; }
+        public DateTime LastAccessDate
+        {
+            get { return this.lastAccessDate; }
+            set { this.lastAccessDate = value.NormalizeToUtc(); }
+        }
 
         /// <summary>
         /// Gets or sets the size of the item, in bytes.

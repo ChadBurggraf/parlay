@@ -53,6 +53,7 @@
     <Compile Include="DiskCacheTests.cs" />
     <Compile Include="DownloadClientConfigurationTests.cs" />
     <Compile Include="DownloadClientTests.cs" />
+    <Compile Include="ExtensionTests.cs" />
     <Compile Include="MemoryCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CacheTests.cs" />
@@ -70,6 +71,9 @@
     <EmbeddedResource Include="Content\Domo.png" />
     <EmbeddedResource Include="Content\LetGo.png" />
     <EmbeddedResource Include="Content\Traindead.png" />
+    <CodeAnalysisDictionary Include="..\CodeAnalysisDictionary.xml">
+      <Link>CodeAnalysisDictionary.xml</Link>
+    </CodeAnalysisDictionary>
     <Content Include="x64\SQLite.Interop.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

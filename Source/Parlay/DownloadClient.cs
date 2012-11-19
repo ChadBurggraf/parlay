@@ -13,8 +13,6 @@ namespace Parlay
     /// </summary>
     public sealed class DownloadClient
     {
-        private DownloadClientConfiguration config;
-
         /// <summary>
         /// Initializes a new instance of the DownloadClient class.
         /// </summary>
@@ -29,7 +27,6 @@ namespace Parlay
         /// <param name="config">The configuration to use.</param>
         public DownloadClient(DownloadClientConfiguration config)
         {
-            this.config = config ?? new DownloadClientConfiguration();
         }
     }
 }

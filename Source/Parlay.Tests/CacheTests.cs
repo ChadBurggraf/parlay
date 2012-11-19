@@ -12,16 +12,6 @@
         private ICache cache;
         private bool disposed;
 
-        protected CacheTests(ICache cache)
-        {
-            if (cache == null)
-            {
-                throw new ArgumentNullException("cache", "cache cannot be null.");
-            }
-
-            this.cache = cache;
-        }
-
         ~CacheTests()
         {
             this.Dispose(false);
@@ -29,14 +19,23 @@
 
         protected ICache Cache
         {
-            get { return this.cache; }
+            get
+            {
+                if (this.disposed)
+                {
+                    throw new ObjectDisposedException(this.GetType().Name);
+                }
+
+                return this.cache ?? (this.cache = this.CreateCache());
+            }
         }
 
-        public virtual void Add()
+        [Test]
+        public virtual void AddContent()
         {
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Domo.png"))
             {
-                this.Cache.Add("http://example.com/Domo.png", stream);
+                this.Cache.AddContent("http://example.com/Domo.png", stream);
             }
 
             Assert.AreEqual(1, this.Cache.ItemCount);
@@ -44,7 +43,7 @@
 
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.LetGo.png"))
             {
-                this.Cache.Add("http://example.com/LetGo.png", stream);
+                this.Cache.AddContent("http://example.com/LetGo.png", stream);
             }
 
             Assert.AreEqual(2, this.Cache.ItemCount);
@@ -52,7 +51,7 @@
 
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Domo.png"))
             {
-                this.Cache.Add("http://example.com/Domo.png", stream);
+                this.Cache.AddContent("http://example.com/Domo.png", stream);
             }
 
             Assert.AreEqual(2, this.Cache.ItemCount);
@@ -65,6 +64,7 @@
             GC.SuppressFinalize(this);
         }
 
+        [Test]
         public virtual void EvictToSize()
         {
             this.PopulateCache();
@@ -73,23 +73,51 @@
             Assert.IsTrue(10000 >= this.Cache.Size);
         }
 
-        public virtual void Get()
+        [Test]
+        public virtual void Expire()
+        {
+            this.PopulateCache();
+            this.Cache.RemoveContent("http://example.com/Domo.png");
+
+            using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Domo.png"))
+            {
+                this.Cache.AddContent("http://example.com/Domo.png", stream, DateTime.UtcNow.AddSeconds(1));
+            }
+
+            using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
+            {
+                Assert.IsNotNull(stream);
+            }
+
+            Thread.Sleep(1000);
+
+            using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
+            {
+                Assert.IsNull(stream);
+            }
+
+            Assert.AreEqual(2, this.Cache.ItemCount);
+        }
+
+        [Test]
+        public virtual void GetContent()
         {
             this.PopulateCache();
 
-            using (Stream stream = this.Cache.Get("http://example.com/Domo.png"))
+            using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
             {
                 Assert.IsNotNull(stream);
                 Assert.AreEqual(6233, stream.Length);
             }
 
-            Assert.IsNull(this.Cache.Get("http://example.com/NotAValidKey.png"));
+            Assert.IsNull(this.Cache.GetContent("http://example.com/NotAValidKey.png"));
         }
 
+        [Test]
         public virtual void MultipleThreads()
         {
             this.PopulateCache();
-            this.Cache.Remove("http://example.com/Traindead.png");
+            this.Cache.RemoveContent("http://example.com/Traindead.png");
 
             ManualResetEvent one = new ManualResetEvent(false);
             ManualResetEvent two = new ManualResetEvent(false);
@@ -97,59 +125,63 @@
             new Thread(
                 () =>
                 {
-                    using (Stream stream = this.Cache.Get("http://example.com/Domo.png"))
+                    using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
                     {
                         Assert.IsNotNull(stream);
                     }
 
                     using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Traindead.png"))
                     {
-                        this.Cache.Add("http://example.com/Traindead.png", stream);
+                        this.Cache.AddContent("http://example.com/Traindead.png", stream);
                     }
 
-                    this.Cache.Remove("http://example.com/LetGo.png");
+                    this.Cache.RemoveContent("http://example.com/LetGo.png");
                     one.Set();
                 }).Start();
 
             new Thread(
                 () =>
                 {
-                    using (Stream stream = this.Cache.Get("http://example.com/Domo.png"))
+                    using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
                     {
                         Assert.IsNotNull(stream);
                     }
 
                     WaitHandle.WaitAll(new[] { one });
 
-                    using (Stream stream = this.Cache.Get("http://example.com/Traindead.png"))
+                    using (Stream stream = this.Cache.GetContent("http://example.com/Traindead.png"))
                     {
                         Assert.IsNotNull(stream);
                     }
 
-                    Assert.IsNull(this.Cache.Get("http://example.com/LetGo.png"));
+                    Assert.IsNull(this.Cache.GetContent("http://example.com/LetGo.png"));
                     two.Set();
                 }).Start();
 
             WaitHandle.WaitAll(new[] { two });
         }
 
+        [TearDown]
         public virtual void Teardown()
         {
             this.Cache.EvictToSize(0);
         }
 
-        public virtual void Remove()
+        [Test]
+        public virtual void RemoveContent()
         {
             this.PopulateCache();
 
-            using (Stream stream = this.Cache.Get("http://example.com/Domo.png"))
+            using (Stream stream = this.Cache.GetContent("http://example.com/Domo.png"))
             {
                 Assert.IsNotNull(stream);
             }
 
-            this.Cache.Remove("http://example.com/Domo.png");
-            Assert.IsNull(this.Cache.Get("http://example.com/Domo.png"));
+            this.Cache.RemoveContent("http://example.com/Domo.png");
+            Assert.IsNull(this.Cache.GetContent("http://example.com/Domo.png"));
         }
+
+        protected abstract ICache CreateCache();
 
         protected virtual void Dispose(bool disposing)
         {
@@ -172,17 +204,17 @@
         {
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Domo.png"))
             {
-                this.Cache.Add("http://example.com/Domo.png", stream);
+                this.Cache.AddContent("http://example.com/Domo.png", stream);
             }
 
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.LetGo.png"))
             {
-                this.Cache.Add("http://example.com/LetGo.png", stream);
+                this.Cache.AddContent("http://example.com/LetGo.png", stream);
             }
 
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Traindead.png"))
             {
-                this.Cache.Add("http://example.com/Traindead.png", stream);
+                this.Cache.AddContent("http://example.com/Traindead.png", stream);
             }
         }
     }

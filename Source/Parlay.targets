@@ -1,5 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <RootDir Condition="'$(RootDir)' == ''">$(MSBuildThisFileDirectory)\..\</RootDir>
   </PropertyGroup>
 
@@ -19,6 +20,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\StyleCop\v4.7\StyleCop.Targets" />
   <UsingTask TaskName="FxCop" AssemblyFile="$(LibDir)FxCopTask.1.0.1\FxCopTask.dll" />
   <UsingTask TaskName="GetVersion" AssemblyFile="$(LibDir)Tasty.0.14.5\Tasty.dll" />
+  <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.Tasks.dll" />
 
   <Target Name="FxCop">
     <MSBuild Projects="@(SolutionProjects)" Targets="Clean;Build" Properties="Configuration=Debug"/>

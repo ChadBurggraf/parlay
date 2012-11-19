@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="C:\Projects\Parlay\Source\Parlay.Tests\Parlay.nunit" total="11" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2012-11-18" time="22:11:03">
+  <environment nunit-version="2.6.2.12296" clr-version="2.0.50727.5466" os-version="Microsoft Windows NT 6.1.7601 Service Pack 1" platform="Win32NT" cwd="C:\Projects\Parlay\Lib\NUnit.Runners.2.6.2\tools" machine-name="CHADB" user="Chad" user-domain="CHADB" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Project" name="C:\Projects\Parlay\Source\Parlay.Tests\Parlay.nunit" executed="True" result="Success" success="True" time="2.211" asserts="0">
+    <results>
+      <test-suite type="Assembly" name="C:\Projects\Parlay\Source\Parlay.Tests\bin\Debug\Parlay.Tests.dll" executed="True" result="Success" success="True" time="2.138" asserts="0">
+        <results>
+          <test-suite type="Namespace" name="Parlay" executed="True" result="Success" success="True" time="2.137" asserts="0">
+            <results>
+              <test-suite type="Namespace" name="Tests" executed="True" result="Success" success="True" time="2.136" asserts="0">
+                <results>
+                  <test-suite type="TestFixture" name="DiskCacheTests" executed="True" result="Success" success="True" time="1.945" asserts="0">
+                    <results>
+                      <test-case name="Parlay.Tests.DiskCacheTests.Add" executed="True" result="Success" success="True" time="1.563" asserts="6" />
+                      <test-case name="Parlay.Tests.DiskCacheTests.EvictToSize" executed="True" result="Success" success="True" time="0.034" asserts="2" />
+                      <test-case name="Parlay.Tests.DiskCacheTests.Get" executed="True" result="Success" success="True" time="0.069" asserts="3" />
+                      <test-case name="Parlay.Tests.DiskCacheTests.MultipleThreads" executed="True" result="Success" success="True" time="0.083" asserts="4" />
+                      <test-case name="Parlay.Tests.DiskCacheTests.Remove" executed="True" result="Success" success="True" time="0.075" asserts="2" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="TestFixture" name="DownloadClientConfigurationTests" executed="True" result="Success" success="True" time="0.006" asserts="0">
+                    <results>
+                      <test-case name="Parlay.Tests.DownloadClientConfigurationTests.Defaults" executed="True" result="Success" success="True" time="0.004" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="TestFixture" name="DownloadClientTests" executed="True" result="Inconclusive" success="False" time="0.000" asserts="0" />
+                  <test-suite type="TestFixture" name="MemoryCacheTests" executed="True" result="Success" success="True" time="0.162" asserts="0">
+                    <results>
+                      <test-case name="Parlay.Tests.MemoryCacheTests.Add" executed="True" result="Success" success="True" time="0.070" asserts="6" />
+                      <test-case name="Parlay.Tests.MemoryCacheTests.EvictToSize" executed="True" result="Success" success="True" time="0.008" asserts="2" />
+                      <test-case name="Parlay.Tests.MemoryCacheTests.Get" executed="True" result="Success" success="True" time="0.011" asserts="3" />
+                      <test-case name="Parlay.Tests.MemoryCacheTests.MultipleThreads" executed="True" result="Success" success="True" time="0.014" asserts="4" />
+                      <test-case name="Parlay.Tests.MemoryCacheTests.Remove" executed="True" result="Success" success="True" time="0.009" asserts="2" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

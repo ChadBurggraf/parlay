@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisualState xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ShowCheckBoxes="false">
+  <TopNode>[0-1000]C:\Projects\Parlay\Source\Parlay.Tests\Parlay.nunit</TopNode>
+  <SelectedNode>[0-1002]Parlay.Tests.DownloadClientConfigurationTests.Defaults</SelectedNode>
+  <ExcludeCategories>false</ExcludeCategories>
+  <Nodes>
+    <Node UniqueName="[0-1000]C:\Projects\Parlay\Source\Parlay.Tests\Parlay.nunit" Expanded="true" />
+    <Node UniqueName="[0-1004]C:\Projects\Parlay\Source\Parlay.Tests\bin\Debug\Parlay.Tests.dll" Expanded="true" />
+    <Node UniqueName="[0-1005]Parlay" Expanded="true" />
+    <Node UniqueName="[0-1006]Parlay.Tests" Expanded="true" />
+    <Node UniqueName="[0-1001]Parlay.Tests.DownloadClientConfigurationTests" Expanded="true" />
+  </Nodes>
+</VisualState>

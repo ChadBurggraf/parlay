@@ -7,7 +7,9 @@
 namespace Parlay
 {
     using System;
+    using System.Collections.Specialized;
     using System.Globalization;
+    using System.Net;
     using System.Security.Cryptography;
     using System.Text;
 
@@ -16,6 +18,49 @@ namespace Parlay
     /// </summary>
     internal static class Extensions
     {
+        /// <summary>
+        /// Clones a <see cref="NameValueCollection"/>'s contents into a new instance.
+        /// </summary>
+        /// <param name="collection">The <see cref="NameValueCollection"/> to clone.</param>
+        /// <returns>A cloned <see cref="NameValueCollection"/> instance.</returns>
+        public static NameValueCollection Clone(this NameValueCollection collection)
+        {
+            NameValueCollection clone = new NameValueCollection();
+
+            if (collection != null)
+            {
+                foreach (string key in collection.AllKeys)
+                {
+                    foreach (string value in collection.GetValues(key))
+                    {
+                        clone.Add(key, value);
+                    }
+                }
+            }
+
+            return clone;
+        }
+
+        /// <summary>
+        /// Clones a <see cref="WebHeaderCollection"/>'s contents into a new instance.
+        /// </summary>
+        /// <param name="collection">The <see cref="WebHeaderCollection"/> to clone.</param>
+        /// <returns>A cloned <see cref="WebHeaderCollection"/> instance.</returns>
+        public static WebHeaderCollection Clone(this WebHeaderCollection collection)
+        {
+            WebHeaderCollection clone = new WebHeaderCollection();
+
+            if (collection != null)
+            {
+                foreach (string key in collection.AllKeys)
+                {
+                    clone.Add(key, collection.Get(key));
+                }
+            }
+
+            return clone;
+        }
+
         /// <summary>
         /// Hashes a string value into an SHA-1 hex string.
         /// </summary>

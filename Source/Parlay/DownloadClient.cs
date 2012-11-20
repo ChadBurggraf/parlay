@@ -7,26 +7,12 @@
 namespace Parlay
 {
     using System;
+    using System.Net;
 
     /// <summary>
     /// Provides the primary interface for downloading cached + queued HTTP content.
     /// </summary>
     public sealed class DownloadClient
     {
-        /// <summary>
-        /// Initializes a new instance of the DownloadClient class.
-        /// </summary>
-        public DownloadClient()
-            : this(new DownloadClientConfiguration())
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the DownloadClient class.
-        /// </summary>
-        /// <param name="config">The configuration to use.</param>
-        public DownloadClient(DownloadClientConfiguration config)
-        {
-        }
     }
 }

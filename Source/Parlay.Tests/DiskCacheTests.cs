@@ -7,6 +7,42 @@
     [TestFixture]
     public sealed class DiskCacheTests : CacheTests
     {
+        [Test]
+        public void DiskCacheAddContent()
+        {
+            this.AddContent();
+        }
+
+        [Test]
+        public void DiskCacheEvictToSize()
+        {
+            this.EvictToSize();
+        }
+
+        [Test]
+        public void DiskCacheExpire()
+        {
+            this.Expire();
+        }
+
+        [Test]
+        public void DiskCacheGetContent()
+        {
+            this.GetContent();
+        }
+
+        [Test]
+        public void DiskCacheMultipleThreads()
+        {
+            this.MultipleThreads();
+        }
+
+        [Test]
+        public void DiskCacheRemoveContent()
+        {
+            this.RemoveContent();
+        }
+
         [TestFixtureTearDown]
         public void TeardownFixture()
         {

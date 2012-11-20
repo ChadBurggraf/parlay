@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// <copyright file="DownloadClientConfiguration.cs" company="Tasty Codes">
+// <copyright file="DownloadOptions.cs" company="Tasty Codes">
 //     Copyright (c) 2012 Chad Burggraf.
 // </copyright>
 //-----------------------------------------------------------------------------
@@ -13,25 +13,25 @@ namespace Parlay
     using System.Reflection;
 
     /// <summary>
-    /// Provides configuration options for a <see cref="DownloadClient"/>.
+    /// Provides configuration options for a <see cref="DownloadClient"/> operation.
     /// </summary>
-    public sealed class DownloadClientConfiguration
+    public sealed class DownloadOptions
     {
-        private static readonly string DefaultUserAgent = DownloadClientConfiguration.GetDefaultUserAgent();
+        private static readonly string DefaultUserAgent = DownloadOptions.GetDefaultUserAgent();
         
         /// <summary>
-        /// Initializes a new instance of the DownloadClientConfiguration class.
+        /// Initializes a new instance of the DownloadOptions class.
         /// </summary>
-        public DownloadClientConfiguration()
+        public DownloadOptions()
             : this(null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the DownloadClientConfiguration class.
+        /// Initializes a new instance of the DownloadOptions class.
         /// </summary>
         /// <param name="config">The existing configuration to initialize this instance with.</param>
-        public DownloadClientConfiguration(DownloadClientConfiguration config)
+        public DownloadOptions(DownloadOptions config)
         {
             if (config != null)
             {
@@ -44,7 +44,7 @@ namespace Parlay
             {
                 this.Headers = new WebHeaderCollection();
                 this.QueryString = new NameValueCollection();
-                this.UserAgent = DownloadClientConfiguration.DefaultUserAgent;
+                this.UserAgent = DownloadOptions.DefaultUserAgent;
             }
         }
 
@@ -70,7 +70,7 @@ namespace Parlay
 
         private static string GetDefaultUserAgent()
         {
-            Version version = typeof(DownloadClientConfiguration).Assembly.GetName().Version;
+            Version version = typeof(DownloadOptions).Assembly.GetName().Version;
 
             return string.Format(
                 CultureInfo.InvariantCulture,

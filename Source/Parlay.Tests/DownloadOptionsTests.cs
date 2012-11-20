@@ -5,14 +5,14 @@
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class DownloadClientConfigurationTests
+    public sealed class DownloadOptionsTests
     {
         [Test]
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Test method.")]
-        public void Defaults()
+        public void DownloadOptionsnDefaults()
         {
-            DownloadClientConfiguration config = new DownloadClientConfiguration();
-            Assert.IsFalse(string.IsNullOrEmpty(config.UserAgent));
+            DownloadOptions options = new DownloadOptions();
+            Assert.IsFalse(string.IsNullOrEmpty(options.UserAgent));
         }
     }
 }

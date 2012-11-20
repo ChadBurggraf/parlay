@@ -6,7 +6,6 @@
     using System.Threading;
     using NUnit.Framework;
 
-    [TestFixture]
     public abstract class CacheTests : IDisposable
     {
         private ICache cache;
@@ -30,8 +29,13 @@
             }
         }
 
-        [Test]
-        public virtual void AddContent()
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected void AddContent()
         {
             using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("Parlay.Tests.Content.Domo.png"))
             {
@@ -58,14 +62,26 @@
             Assert.AreEqual(11400, this.Cache.Size);
         }
 
-        public void Dispose()
+        protected abstract ICache CreateCache();
+
+        protected virtual void Dispose(bool disposing)
         {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (this.cache != null)
+                    {
+                        this.cache.Dispose();
+                        this.cache = null;
+                    }
+                }
+
+                this.disposed = true;
+            }
         }
 
-        [Test]
-        public virtual void EvictToSize()
+        protected void EvictToSize()
         {
             this.PopulateCache();
             Assert.IsTrue(10000 < this.Cache.Size);
@@ -73,8 +89,7 @@
             Assert.IsTrue(10000 >= this.Cache.Size);
         }
 
-        [Test]
-        public virtual void Expire()
+        protected void Expire()
         {
             this.PopulateCache();
             this.Cache.RemoveContent("http://example.com/Domo.png");
@@ -99,8 +114,7 @@
             Assert.AreEqual(2, this.Cache.ItemCount);
         }
 
-        [Test]
-        public virtual void GetContent()
+        protected void GetContent()
         {
             this.PopulateCache();
 
@@ -113,8 +127,7 @@
             Assert.IsNull(this.Cache.GetContent("http://example.com/NotAValidKey.png"));
         }
 
-        [Test]
-        public virtual void MultipleThreads()
+        protected void MultipleThreads()
         {
             this.PopulateCache();
             this.Cache.RemoveContent("http://example.com/Traindead.png");
@@ -161,14 +174,12 @@
             WaitHandle.WaitAll(new[] { two });
         }
 
-        [TearDown]
-        public virtual void Teardown()
+        protected void Teardown()
         {
             this.Cache.EvictToSize(0);
         }
 
-        [Test]
-        public virtual void RemoveContent()
+        protected void RemoveContent()
         {
             this.PopulateCache();
 
@@ -179,25 +190,6 @@
 
             this.Cache.RemoveContent("http://example.com/Domo.png");
             Assert.IsNull(this.Cache.GetContent("http://example.com/Domo.png"));
-        }
-
-        protected abstract ICache CreateCache();
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    if (this.cache != null)
-                    {
-                        this.cache.Dispose();
-                        this.cache = null;
-                    }
-                }
-
-                this.disposed = true;
-            }
         }
 
         private void PopulateCache()

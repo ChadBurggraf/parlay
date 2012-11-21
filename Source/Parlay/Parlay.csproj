@@ -59,6 +59,7 @@
     <Compile Include="DownloadOptions.cs" />
     <Compile Include="DownloadClient.cs" />
     <Compile Include="DownloadResult.cs" />
+    <Compile Include="DownloadTask.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ICache.cs" />
     <Compile Include="MemoryCache.cs">

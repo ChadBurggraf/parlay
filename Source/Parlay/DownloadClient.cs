@@ -92,6 +92,17 @@ namespace Parlay
                 throw new ArgumentNullException("url", "url cannot be null.");
             }
 
+            DownloadResult result;
+            string key = url.ToString().ToUpperInvariant();
+            Stream content = this.cache.GetContent(key);
+
+            if (content != null)
+            {
+            }
+            else
+            {
+            }
+
             options = new DownloadOptions(options);
             throw new NotImplementedException();
         }

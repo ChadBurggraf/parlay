@@ -37,13 +37,11 @@ namespace Parlay
             {
                 this.Credentials = config.Credentials;
                 this.Headers = config.Headers.Clone();
-                this.QueryString = config.QueryString.Clone();
                 this.UserAgent = config.UserAgent;
             }
             else
             {
                 this.Headers = new WebHeaderCollection();
-                this.QueryString = new NameValueCollection();
                 this.UserAgent = DownloadOptions.DefaultUserAgent;
             }
         }
@@ -57,11 +55,6 @@ namespace Parlay
         /// Gets a collection of additional custom headers to send when making HTTP requests.
         /// </summary>
         public WebHeaderCollection Headers { get; private set; }
-
-        /// <summary>
-        /// Gets a collection of query string key/value pairs to send when making HTTP requests.
-        /// </summary>
-        public NameValueCollection QueryString { get; private set; }
 
         /// <summary>
         /// Gets or sets the user-agent string to use when making HTTP requests.

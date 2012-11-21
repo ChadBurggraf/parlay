@@ -19,29 +19,6 @@ namespace Parlay
     internal static class Extensions
     {
         /// <summary>
-        /// Clones a <see cref="NameValueCollection"/>'s contents into a new instance.
-        /// </summary>
-        /// <param name="collection">The <see cref="NameValueCollection"/> to clone.</param>
-        /// <returns>A cloned <see cref="NameValueCollection"/> instance.</returns>
-        public static NameValueCollection Clone(this NameValueCollection collection)
-        {
-            NameValueCollection clone = new NameValueCollection();
-
-            if (collection != null)
-            {
-                foreach (string key in collection.AllKeys)
-                {
-                    foreach (string value in collection.GetValues(key))
-                    {
-                        clone.Add(key, value);
-                    }
-                }
-            }
-
-            return clone;
-        }
-
-        /// <summary>
         /// Clones a <see cref="WebHeaderCollection"/>'s contents into a new instance.
         /// </summary>
         /// <param name="collection">The <see cref="WebHeaderCollection"/> to clone.</param>

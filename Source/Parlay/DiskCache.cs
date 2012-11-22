@@ -7,10 +7,10 @@
 namespace Parlay
 {
     using System;
+    using System.Data;
     using System.Data.SQLite;
     using System.Globalization;
     using System.IO;
-    using Dapper;
 
     /// <summary>
     /// Implements <see cref="ICache"/> with an on-disk cache database and content storage.
@@ -151,7 +151,13 @@ namespace Parlay
                 using (connection = new SQLiteConnection(this.connectionString))
                 {
                     connection.Open();
-                    connection.Execute(SqliteCache.GetSchema());
+
+                    using (SQLiteCommand command = connection.CreateCommand())
+                    {
+                        command.CommandText = SqliteCache.GetSchema();
+                        command.CommandType = CommandType.Text;
+                        command.ExecuteNonQuery();
+                    }
                 }
 
                 connection = null;

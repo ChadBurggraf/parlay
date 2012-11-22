@@ -33,9 +33,6 @@
     <DocumentationFile>bin\Release\Parlay.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapper">
-      <HintPath>..\..\Lib\Dapper.1.12.1\lib\net40\Dapper.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />

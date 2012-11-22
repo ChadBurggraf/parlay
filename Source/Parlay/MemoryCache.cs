@@ -8,10 +8,10 @@ namespace Parlay
 {
     using System;
     using System.Collections.Specialized;
+    using System.Data;
     using System.Data.SQLite;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
-    using Dapper;
     
     /// <summary>
     /// Implements <see cref="ICache"/> with an in-memory cache database and content storage.
@@ -190,7 +190,14 @@ namespace Parlay
             {
                 connection = new SQLiteConnection(MemoryCache.ConnectionString);
                 connection.Open();
-                connection.Execute(SqliteCache.GetSchema());
+
+                using (SQLiteCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = SqliteCache.GetSchema();
+                    command.CommandType = CommandType.Text;
+                    command.ExecuteNonQuery();
+                }
+
                 return connection;
             }
             catch

@@ -8,3 +8,4 @@ TestResults/
 *.user
 *.VisualState.xml
 StyleCop.Cache
+TestResult.xml

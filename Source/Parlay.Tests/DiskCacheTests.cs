@@ -14,6 +14,12 @@
         }
 
         [Test]
+        public void DiskCacheAddContentEvict()
+        {
+            this.AddContentEvict();
+        }
+
+        [Test]
         public void DiskCacheEvictToSize()
         {
             this.EvictToSize();
@@ -43,6 +49,18 @@
             this.RemoveContent();
         }
 
+        [SetUp]
+        public override void Setup()
+        {
+            base.Setup();
+        }
+
+        [TearDown]
+        public override void Teardown()
+        {
+            base.Teardown();
+        }
+
         [TestFixtureTearDown]
         public void TeardownFixture()
         {
@@ -54,9 +72,9 @@
             }
         }
 
-        protected override ICache CreateCache()
+        protected override ICache CreateCache(long maxSize)
         {
-            return new DiskCache(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName().Replace(".", string.Empty)));
+            return new DiskCache(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName().Replace(".", string.Empty)), maxSize);
         }
 
         protected override void Dispose(bool disposing)

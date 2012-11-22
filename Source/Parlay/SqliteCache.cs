@@ -84,7 +84,7 @@ FROM [ParlayStatistics];";
         /// </summary>
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
-        public void AddContent(string key, Stream content)
+        public void AddContent(string key, byte[] content)
         {
             this.AddContentImpl(key, content, null);
         }
@@ -95,7 +95,7 @@ FROM [ParlayStatistics];";
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
         /// <param name="expires">The date the content expires.</param>
-        public void AddContent(string key, Stream content, DateTime expires)
+        public void AddContent(string key, byte[] content, DateTime expires)
         {
             this.AddContentImpl(key, content, expires);
         }
@@ -147,14 +147,14 @@ FROM [ParlayStatistics];";
         }
 
         /// <summary>
-        /// Gets a <see cref="Stream"/> of content for the item with the given
+        /// Gets the content for the item with the given
         /// key. Returns null if the item is not found.
         /// </summary>
         /// <param name="key">The key of the item to get.</param>
-        /// <returns>A <see cref="Stream"/> of item content, or null if none is found.</returns>
-        public Stream GetContent(string key)
+        /// <returns>The content, or null if none is found.</returns>
+        public byte[] GetContent(string key)
         {
-            Stream content = null;
+            byte[] content = null;
             CacheItem item = this.GetItem(key, null);
 
             if (item != null)
@@ -238,7 +238,7 @@ FROM [ParlayStatistics];";
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
         /// <param name="expires">The date the content expires, if applicable.</param>
-        protected void AddContentImpl(string key, Stream content, DateTime? expires)
+        protected void AddContentImpl(string key, byte[] content, DateTime? expires)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -248,11 +248,6 @@ FROM [ParlayStatistics];";
             if (content == null)
             {
                 throw new ArgumentNullException("content", "content cannot be null.");
-            }
-
-            if (!content.CanRead)
-            {
-                throw new ArgumentException("content must be a readable stream.", "content");
             }
 
             const string Sql =
@@ -328,7 +323,7 @@ FROM [ParlayStatistics];";
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected abstract Stream GetStoredContent(string key);
+        protected abstract byte[] GetStoredContent(string key);
 
         /// <summary>
         /// Removes an item from the cache.
@@ -359,7 +354,7 @@ FROM [ParlayStatistics];";
         /// </summary>
         /// <param name="key">The key identifying the content to store.</param>
         /// <param name="content">The content to store.</param>
-        protected abstract void StoreContent(string key, Stream content);
+        protected abstract void StoreContent(string key, byte[] content);
 
         /// <summary>
         /// Disposes of resources used by this instance.

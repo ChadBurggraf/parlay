@@ -10,7 +10,7 @@ namespace Parlay
     using System.IO;
 
     /// <summary>
-    /// Defines the interface for <see cref="DownloadClient"/> cache implementations.
+    /// Defines the interface for <see cref="Downloader"/> cache implementations.
     /// </summary>
     public interface ICache : IDisposable
     {
@@ -29,7 +29,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
-        void AddContent(string key, Stream content);
+        void AddContent(string key, byte[] content);
 
         /// <summary>
         /// Adds an item to the cache.
@@ -37,7 +37,7 @@ namespace Parlay
         /// <param name="key">The cache key.</param>
         /// <param name="content">The content of the item to add.</param>
         /// <param name="expires">The date the content expires.</param>
-        void AddContent(string key, Stream content, DateTime expires);
+        void AddContent(string key, byte[] content, DateTime expires);
 
         /// <summary>
         /// Evicts items from the cache until the total cache size is smaller
@@ -47,12 +47,12 @@ namespace Parlay
         void EvictToSize(long maxSize);
 
         /// <summary>
-        /// Gets a <see cref="Stream"/> of content for the item with the given
+        /// Gets the content for the item with the given
         /// key. Returns null if the item is not found.
         /// </summary>
         /// <param name="key">The key of the item to get.</param>
-        /// <returns>A <see cref="Stream"/> of item content, or null if none is found.</returns>
-        Stream GetContent(string key);
+        /// <returns>The content, or null if none is found.</returns>
+        byte[] GetContent(string key);
 
         /// <summary>
         /// Removes an item from the cache.

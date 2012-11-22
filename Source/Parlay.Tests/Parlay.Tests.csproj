@@ -52,7 +52,7 @@
     </Compile>
     <Compile Include="DiskCacheTests.cs" />
     <Compile Include="DownloadOptionsTests.cs" />
-    <Compile Include="DownloadClientTests.cs" />
+    <Compile Include="DownloaderTests.cs" />
     <Compile Include="ExtensionsTests.cs" />
     <Compile Include="MemoryCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

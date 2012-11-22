@@ -13,6 +13,12 @@
         }
 
         [Test]
+        public void MemoryCacheAddContentEvict()
+        {
+            this.AddContentEvict();
+        }
+
+        [Test]
         public void MemoryCacheEvictToSize()
         {
             this.EvictToSize();
@@ -42,9 +48,21 @@
             this.RemoveContent();
         }
 
-        protected override ICache CreateCache()
+        [SetUp]
+        public override void Setup()
         {
-            return new MemoryCache();
+            base.Setup();
+        }
+
+        [TearDown]
+        public override void Teardown()
+        {
+            base.Teardown();
+        }
+
+        protected override ICache CreateCache(long maxSize)
+        {
+            return new MemoryCache(maxSize);
         }
     }
 }

@@ -54,10 +54,12 @@
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
     <Compile Include="CacheItem.cs" />
+    <Compile Include="CacheProfile.cs" />
     <Compile Include="CacheStatistics.cs" />
+    <Compile Include="CacheType.cs" />
     <Compile Include="DiskCache.cs" />
     <Compile Include="DownloadOptions.cs" />
-    <Compile Include="DownloadClient.cs" />
+    <Compile Include="Downloader.cs" />
     <Compile Include="DownloadResult.cs" />
     <Compile Include="DownloadTask.cs" />
     <Compile Include="Extensions.cs" />

@@ -84,22 +84,14 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected override Stream GetStoredContent(string key)
+        protected override byte[] GetStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
                 throw new ArgumentNullException("key", "key must contain a value.");
             }
 
-            Stream result = null;
-            byte[] content = MemoryCache.ContentStore[key] as byte[];
-
-            if (content != null)
-            {
-                result = new MemoryStream(content);
-            }
-
-            return result;
+            return MemoryCache.ContentStore[key] as byte[];
         }
 
         /// <summary>
@@ -107,7 +99,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the content to store.</param>
         /// <param name="content">The content to store.</param>
-        protected override void StoreContent(string key, Stream content)
+        protected override void StoreContent(string key, byte[] content)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -119,16 +111,7 @@ namespace Parlay
                 throw new ArgumentNullException("content", "content cannot be null.");
             }
 
-            long length = content.Length;
-            byte[] buffer = new byte[length];
-            int offset = 0;
-
-            while (offset < length)
-            {
-                offset += content.Read(buffer, offset, buffer.Length);
-            }
-
-            MemoryCache.ContentStore[key] = buffer;
+            MemoryCache.ContentStore[key] = content;
         }
 
         private static SQLiteConnection CreateAndOpenDefaultConnection()

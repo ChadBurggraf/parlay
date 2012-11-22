@@ -13,7 +13,7 @@ namespace Parlay
     using System.Reflection;
 
     /// <summary>
-    /// Provides configuration options for a <see cref="DownloadClient"/> operation.
+    /// Provides configuration options for a <see cref="Downloader"/> operation.
     /// </summary>
     public sealed class DownloadOptions
     {

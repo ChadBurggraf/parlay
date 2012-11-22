@@ -9,6 +9,7 @@ namespace Parlay
     using System;
     using System.Collections.Specialized;
     using System.Globalization;
+    using System.IO;
     using System.Net;
     using System.Security.Cryptography;
     using System.Text;
@@ -91,6 +92,30 @@ namespace Parlay
             }
 
             return value;
+        }
+
+        /// <summary>
+        /// Reads all of the data from a stream as a byte array.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <returns>The entire contents of the stream.</returns>
+        public static byte[] ReadAllBytes(this Stream stream)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException("stream", "stream cannot be null.");
+            }
+
+            long length = stream.Length;
+            int offset = 0;
+            byte[] buffer = new byte[length];
+
+            while (offset < length)
+            {
+                offset += stream.Read(buffer, offset, (int)(length - offset));
+            }
+
+            return buffer;
         }
 
         /// <summary>

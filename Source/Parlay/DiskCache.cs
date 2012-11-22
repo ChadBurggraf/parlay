@@ -119,7 +119,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the stored content to get.</param>
         /// <returns>The stored content for the given key.</returns>
-        protected override Stream GetStoredContent(string key)
+        protected override byte[] GetStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -130,7 +130,7 @@ namespace Parlay
 
             if (File.Exists(contentPath))
             {
-                return File.OpenRead(contentPath);
+                return File.ReadAllBytes(contentPath);
             }
 
             return null;
@@ -141,7 +141,7 @@ namespace Parlay
         /// </summary>
         /// <param name="key">The key identifying the content to store.</param>
         /// <param name="content">The content to store.</param>
-        protected override void StoreContent(string key, Stream content)
+        protected override void StoreContent(string key, byte[] content)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -154,11 +154,7 @@ namespace Parlay
             }
 
             string contentPath = System.IO.Path.Combine(this.path, key.Hash());
-
-            using (FileStream stream = File.Create(contentPath))
-            {
-                content.CopyTo(stream);
-            }
+            File.WriteAllBytes(contentPath, content);
         }
     }
 }

@@ -64,7 +64,7 @@
         [TestFixtureTearDown]
         public void TeardownFixture()
         {
-            string path = ((DiskCache)this.Cache).Path;
+            string path = ((DiskCache)this.Cache).LocalPath;
 
             if (Directory.Exists(path))
             {

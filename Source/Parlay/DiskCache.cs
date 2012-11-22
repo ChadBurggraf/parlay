@@ -15,55 +15,134 @@ namespace Parlay
     /// <summary>
     /// Implements <see cref="ICache"/> with an on-disk cache database and content storage.
     /// </summary>
-    public sealed class DiskCache : SqliteCache
+    public sealed class DiskCache : ICache, ISqliteCacheStorage
     {
-        private string path, databasePath, connectionString;
+        private string localPath, databasePath, connectionString;
+        private SqliteCache cache;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the DiskCache class.
         /// </summary>
-        /// <param name="path">The path of the directory to store cached content in.</param>
-        public DiskCache(string path)
-            : this(path, 104857600)
+        /// <param name="localPath">The path of the directory to store cached content in.</param>
+        public DiskCache(string localPath)
+            : this(localPath, 104857600)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the DiskCache class.
         /// </summary>
-        /// <param name="path">The path of the directory to store cached content in.</param>
+        /// <param name="localPath">The path of the directory to store cached content in.</param>
         /// <param name="maxSize">The maximum size, in bytes, to allow the cache to grow to.</param>
-        public DiskCache(string path, long maxSize)
-            : base(maxSize)
+        public DiskCache(string localPath, long maxSize)
         {
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(localPath))
             {
                 throw new ArgumentNullException("path", "path must contain a value.");
             }
 
-            this.path = path;
-            this.databasePath = System.IO.Path.Combine(path, "Parlay.sqlite");
+            this.localPath = localPath;
+            this.databasePath = System.IO.Path.Combine(localPath, "Parlay.sqlite");
             this.connectionString = string.Format(CultureInfo.InvariantCulture, "Data Source={0};DateTimeKind=Utc;Journal Mode=Off;Synchronous=Off;Version=3", this.databasePath);
+            this.cache = new SqliteCache(this, maxSize);
 
-            if (!Directory.Exists(path))
+            if (!Directory.Exists(localPath))
             {
-                Directory.CreateDirectory(path);
+                Directory.CreateDirectory(localPath);
             }
         }
 
         /// <summary>
-        /// Gets the path of the directory this instance stores cached content in.
+        /// Finalizes an instance of the DiskCache class.
         /// </summary>
-        internal string Path
+        ~DiskCache()
         {
-            get { return this.path; }
+            this.Dispose(false);
         }
 
         /// <summary>
-        /// Creates an opens a <see cref="SQLiteConnection"/> to use for accessing cache information.
+        /// Gets the number of items in the cache.
         /// </summary>
-        /// <returns>A new <see cref="SQLiteConnection"/>.</returns>
-        protected override SQLiteConnection CreateAndOpenConnection()
+        public long ItemCount
+        {
+            get { return this.cache.ItemCount; }
+        }
+
+        /// <summary>
+        /// Gets the size of the cache, in bytes.
+        /// </summary>
+        public long Size
+        {
+            get { return this.cache.Size; }
+        }
+
+        internal string LocalPath
+        {
+            get { return this.localPath; }
+        }
+
+        /// <summary>
+        /// Adds an item to the cache.
+        /// </summary>
+        /// <param name="key">The cache key.</param>
+        /// <param name="content">The content of the item to add.</param>
+        public void AddContent(string key, byte[] content)
+        {
+            this.cache.AddContent(key, content);
+        }
+
+        /// <summary>
+        /// Adds an item to the cache.
+        /// </summary>
+        /// <param name="key">The cache key.</param>
+        /// <param name="content">The content of the item to add.</param>
+        /// <param name="expires">The date the content expires.</param>
+        public void AddContent(string key, byte[] content, DateTime expires)
+        {
+            this.cache.AddContent(key, content, expires);
+        }
+
+        /// <summary>
+        /// Disposes of resources used by this instance.
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Evicts items from the cache until the total cache size is smaller
+        /// than or equal to the given maximum size, in bytes.
+        /// </summary>
+        /// <param name="maxSize">The maximum size of the cache, in bytes.</param>
+        public void EvictToSize(long maxSize)
+        {
+            this.cache.EvictToSize(maxSize);
+        }
+
+        /// <summary>
+        /// Gets the content for the item with the given
+        /// key. Returns null if the item is not found.
+        /// </summary>
+        /// <param name="key">The key of the item to get.</param>
+        /// <returns>The content, or null if none is found.</returns>
+        public byte[] GetContent(string key)
+        {
+            return this.cache.GetContent(key);
+        }
+
+        /// <summary>
+        /// Removes an item from the cache.
+        /// </summary>
+        /// <param name="key">The item's network identifier.</param>
+        public void RemoveContent(string key)
+        {
+            this.cache.RemoveContent(key);
+        }
+
+        SQLiteConnection ISqliteCacheStorage.CreateAndOpenConnection()
         {
             SQLiteConnection connection = null;
 
@@ -95,18 +174,14 @@ namespace Parlay
             }
         }
 
-        /// <summary>
-        /// Deletes the stored content identified by the given key.
-        /// </summary>
-        /// <param name="key">The key identifying the content to delete.</param>
-        protected override void DeleteStoredContent(string key)
+        void ISqliteCacheStorage.DeleteStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
                 throw new ArgumentNullException("key", "key must contain a value.");
             }
 
-            string contentPath = System.IO.Path.Combine(this.path, key.Hash());
+            string contentPath = System.IO.Path.Combine(this.localPath, key.Hash());
 
             if (File.Exists(contentPath))
             {
@@ -114,19 +189,14 @@ namespace Parlay
             }
         }
 
-        /// <summary>
-        /// Gets the stored content for the given key
-        /// </summary>
-        /// <param name="key">The key identifying the stored content to get.</param>
-        /// <returns>The stored content for the given key.</returns>
-        protected override byte[] GetStoredContent(string key)
+        byte[] ISqliteCacheStorage.GetStoredContent(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
                 throw new ArgumentNullException("key", "key must contain a value.");
             }
 
-            string contentPath = System.IO.Path.Combine(this.path, key.Hash());
+            string contentPath = System.IO.Path.Combine(this.localPath, key.Hash());
 
             if (File.Exists(contentPath))
             {
@@ -136,12 +206,7 @@ namespace Parlay
             return null;
         }
 
-        /// <summary>
-        /// Stores content identified by the given key in the cache.
-        /// </summary>
-        /// <param name="key">The key identifying the content to store.</param>
-        /// <param name="content">The content to store.</param>
-        protected override void StoreContent(string key, byte[] content)
+        void ISqliteCacheStorage.StoreContent(string key, byte[] content)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -153,8 +218,25 @@ namespace Parlay
                 throw new ArgumentNullException("content", "content cannot be null.");
             }
 
-            string contentPath = System.IO.Path.Combine(this.path, key.Hash());
+            string contentPath = System.IO.Path.Combine(this.localPath, key.Hash());
             File.WriteAllBytes(contentPath, content);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (this.cache != null)
+                    {
+                        this.cache.Dispose();
+                    }
+                }
+
+                this.cache = null;
+                this.disposed = true;
+            }
         }
     }
 }

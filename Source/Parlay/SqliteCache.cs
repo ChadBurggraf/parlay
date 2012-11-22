@@ -15,10 +15,7 @@ namespace Parlay
     using System.Linq;
     using Dapper;
 
-    /// <summary>
-    /// Provides a base <see cref="ICache"/> implementation for SQLite caches.
-    /// </summary>
-    public abstract class SqliteCache : ICache
+    internal sealed class SqliteCache : ICache
     {
         private const string RemoveSql =
 @"UPDATE [ParlayStatistics]
@@ -34,30 +31,27 @@ SELECT *
 FROM [ParlayStatistics];";
 
         private readonly object syncRoot = new object();
+        private ISqliteCacheStorage storage;
         private long maxSize;
         private long? itemCount, size;
         private bool disposed;
 
-        /// <summary>
-        /// Initializes a new instance of the SqliteCache class.
-        /// </summary>
-        /// <param name="maxSize">The maximum size, in bytes, to allow the cache to grow to.</param>
-        protected SqliteCache(long maxSize)
+        internal SqliteCache(ISqliteCacheStorage storage, long maxSize)
         {
+            if (storage == null)
+            {
+                throw new ArgumentNullException("storage", "storage cannot be null.");
+            }
+
+            this.storage = storage;
             this.maxSize = maxSize > 0 ? maxSize : 0;
         }
 
-        /// <summary>
-        /// Finalizes an instance of the SqliteCache class.
-        /// </summary>
         ~SqliteCache()
         {
             this.Dispose(false);
         }
 
-        /// <summary>
-        /// Gets the number of items in the cache.
-        /// </summary>
         public long ItemCount
         {
             get
@@ -67,9 +61,6 @@ FROM [ParlayStatistics];";
             }
         }
 
-        /// <summary>
-        /// Gets the size of the cache, in bytes.
-        /// </summary>
         public long Size
         {
             get
@@ -79,137 +70,8 @@ FROM [ParlayStatistics];";
             }
         }
 
-        /// <summary>
-        /// Adds an item to the cache.
-        /// </summary>
-        /// <param name="key">The cache key.</param>
-        /// <param name="content">The content of the item to add.</param>
-        public void AddContent(string key, byte[] content)
-        {
-            this.AddContentImpl(key, content, null);
-        }
-
-        /// <summary>
-        /// Adds an item to the cache.
-        /// </summary>
-        /// <param name="key">The cache key.</param>
-        /// <param name="content">The content of the item to add.</param>
-        /// <param name="expires">The date the content expires.</param>
-        public void AddContent(string key, byte[] content, DateTime expires)
-        {
-            this.AddContentImpl(key, content, expires);
-        }
-
-        /// <summary>
-        /// Disposes of resources used by this instance.
-        /// </summary>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Evicts items from the cache until the total cache size is smaller
-        /// than or equal to the given maximum size, in bytes.
-        /// </summary>
-        /// <param name="maxSize">The maximum size of the cache, in bytes.</param>
-        public void EvictToSize(long maxSize)
-        {
-            if (maxSize < 0)
-            {
-                maxSize = 0;
-            }
-
-            if (this.Size > maxSize)
-            {
-                using (IDbConnection connection = this.CreateAndOpenConnection())
-                {
-                    using (IDbTransaction transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            lock (this.syncRoot)
-                            {
-                                this.EvictExpired(connection, transaction);
-                                this.EvictToSize(maxSize, connection, transaction);
-                                transaction.Commit();
-                            }
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the content for the item with the given
-        /// key. Returns null if the item is not found.
-        /// </summary>
-        /// <param name="key">The key of the item to get.</param>
-        /// <returns>The content, or null if none is found.</returns>
-        public byte[] GetContent(string key)
-        {
-            byte[] content = null;
-            CacheItem item = this.GetItem(key, null);
-
-            if (item != null)
-            {
-                if (item.ExpireDate == null || item.ExpireDate > DateTime.UtcNow)
-                {
-                    content = this.GetStoredContent(item.Key);
-
-                    if (content == null)
-                    {
-                        this.RemoveContent(key);
-                    }
-                }
-                else
-                {
-                    this.RemoveContent(key);
-                }
-            }
-
-            return content;
-        }
-
-        /// <summary>
-        /// Removes an item from the cache.
-        /// </summary>
-        /// <param name="key">The item's network identifier.</param>
-        public void RemoveContent(string key)
-        {
-            using (IDbConnection connection = this.CreateAndOpenConnection())
-            {
-                using (IDbTransaction transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        lock (this.syncRoot)
-                        {
-                            this.RemoveContent(key, connection, transaction);
-                            transaction.Commit();
-                        }
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the schema to use for a SQLite cache.
-        /// </summary>
-        /// <returns>The schema definition.</returns>
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Performance.")]
-        protected static string GetSchema()
+        public static string GetSchema()
         {
             Stream stream = null;
 
@@ -232,13 +94,103 @@ FROM [ParlayStatistics];";
             }
         }
 
-        /// <summary>
-        /// Adds an item to the cache.
-        /// </summary>
-        /// <param name="key">The cache key.</param>
-        /// <param name="content">The content of the item to add.</param>
-        /// <param name="expires">The date the content expires, if applicable.</param>
-        protected void AddContentImpl(string key, byte[] content, DateTime? expires)
+        public void AddContent(string key, byte[] content)
+        {
+            this.AddContentImpl(key, content, null);
+        }
+
+        public void AddContent(string key, byte[] content, DateTime expires)
+        {
+            this.AddContentImpl(key, content, expires);
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public void EvictToSize(long maxSize)
+        {
+            if (maxSize < 0)
+            {
+                maxSize = 0;
+            }
+
+            if (this.Size > maxSize)
+            {
+                using (IDbConnection connection = this.storage.CreateAndOpenConnection())
+                {
+                    using (IDbTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            lock (this.syncRoot)
+                            {
+                                this.EvictExpired(connection, transaction);
+                                this.EvictToSize(maxSize, connection, transaction);
+                                transaction.Commit();
+                            }
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+        }
+
+        public byte[] GetContent(string key)
+        {
+            byte[] content = null;
+            CacheItem item = this.GetItem(key, null);
+
+            if (item != null)
+            {
+                if (item.ExpireDate == null || item.ExpireDate > DateTime.UtcNow)
+                {
+                    content = this.storage.GetStoredContent(item.Key);
+
+                    if (content == null)
+                    {
+                        this.RemoveContent(key);
+                    }
+                }
+                else
+                {
+                    this.RemoveContent(key);
+                }
+            }
+
+            return content;
+        }
+
+        public void RemoveContent(string key)
+        {
+            using (IDbConnection connection = this.storage.CreateAndOpenConnection())
+            {
+                using (IDbTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        lock (this.syncRoot)
+                        {
+                            this.RemoveContent(key, connection, transaction);
+                            transaction.Commit();
+                        }
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private void AddContentImpl(string key, byte[] content, DateTime? expires)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -273,7 +225,7 @@ FROM [ParlayStatistics];";
                 Size = content.Length
             };
 
-            using (IDbConnection connection = this.CreateAndOpenConnection())
+            using (IDbConnection connection = this.storage.CreateAndOpenConnection())
             {
                 using (IDbTransaction transaction = connection.BeginTransaction())
                 {
@@ -284,7 +236,7 @@ FROM [ParlayStatistics];";
                             this.RemoveContent(item.Key, connection, transaction);
 
                             CacheStatistics stats = connection.Query<CacheStatistics>(Sql, item, transaction).First();
-                            this.StoreContent(item.Key, content);
+                            this.storage.StoreContent(item.Key, content);
 
                             this.itemCount = stats.ItemCount;
                             this.size = stats.Size;
@@ -306,61 +258,7 @@ FROM [ParlayStatistics];";
             }
         }
 
-        /// <summary>
-        /// Creates an opens a <see cref="SQLiteConnection"/> to use for accessing cache information.
-        /// </summary>
-        /// <returns>A new <see cref="SQLiteConnection"/>.</returns>
-        protected abstract SQLiteConnection CreateAndOpenConnection();
-
-        /// <summary>
-        /// Deletes the stored content identified by the given key.
-        /// </summary>
-        /// <param name="key">The key identifying the content to delete.</param>
-        protected abstract void DeleteStoredContent(string key);
-
-        /// <summary>
-        /// Gets the stored content for the given key
-        /// </summary>
-        /// <param name="key">The key identifying the stored content to get.</param>
-        /// <returns>The stored content for the given key.</returns>
-        protected abstract byte[] GetStoredContent(string key);
-
-        /// <summary>
-        /// Removes an item from the cache.
-        /// </summary>
-        /// <param name="key">The item's network identifier.</param>
-        /// <param name="connection">The <see cref="IDbConnection"/> to use.</param>
-        /// <param name="transaction">The <see cref="IDbTransaction"/> to use.</param>
-        protected void RemoveContent(string key, IDbConnection connection, IDbTransaction transaction)
-        {
-            CacheItem item = this.GetItem(key, null);
-
-            if (item != null)
-            {
-                CacheStatistics stats = connection.Query<CacheStatistics>(
-                        SqliteCache.RemoveSql,
-                        new { Key = item.Key, Size = item.Size },
-                        transaction).First();
-
-                this.DeleteStoredContent(item.Key);
-
-                this.itemCount = stats.ItemCount;
-                this.size = stats.Size;
-            }
-        }
-
-        /// <summary>
-        /// Stores content identified by the given key in the cache.
-        /// </summary>
-        /// <param name="key">The key identifying the content to store.</param>
-        /// <param name="content">The content to store.</param>
-        protected abstract void StoreContent(string key, byte[] content);
-
-        /// <summary>
-        /// Disposes of resources used by this instance.
-        /// </summary>
-        /// <param name="disposing">A value indicating whether to dispose of managed resources.</param>
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!this.disposed)
             {
@@ -368,14 +266,12 @@ FROM [ParlayStatistics];";
                 {
                 }
 
+                this.storage = null;
                 this.disposed = true;
             }
         }
 
-        /// <summary>
-        /// Ensures that this instance's statistics have been initialized.
-        /// </summary>
-        protected void EnsureStatistics()
+        private void EnsureStatistics()
         {
             const string Sql =
 @"SELECT *
@@ -387,7 +283,7 @@ FROM [ParlayStatistics];";
                 {
                     if (this.itemCount == null || this.size == null)
                     {
-                        using (IDbConnection connection = this.CreateAndOpenConnection())
+                        using (IDbConnection connection = this.storage.CreateAndOpenConnection())
                         {
                             CacheStatistics stats = connection.Query<CacheStatistics>(Sql).First();
                             this.itemCount = stats.ItemCount;
@@ -398,12 +294,7 @@ FROM [ParlayStatistics];";
             }
         }
 
-        /// <summary>
-        /// Evicts all expired items from the cache.
-        /// </summary>
-        /// <param name="connection">The <see cref="IDbConnection"/> to use.</param>
-        /// <param name="transaction">The <see cref="IDbTransaction"/> to use.</param>
-        protected void EvictExpired(IDbConnection connection, IDbTransaction transaction)
+        private void EvictExpired(IDbConnection connection, IDbTransaction transaction)
         {
             const string Sql =
 @"SELECT
@@ -428,7 +319,7 @@ LIMIT 100;";
                         new { Key = item.Key, Size = item.Size },
                         transaction).First();
 
-                    this.DeleteStoredContent(item.Key);
+                    this.storage.DeleteStoredContent(item.Key);
                 }
 
                 if (items.Length == 0)
@@ -444,14 +335,7 @@ LIMIT 100;";
             }
         }
 
-        /// <summary>
-        /// Evicts items from the cache until the total cache size is smaller
-        /// than or equal to the given maximum size, in bytes.
-        /// </summary>
-        /// <param name="maxSize">The maximum size of the cache, in bytes.</param>
-        /// <param name="connection">The <see cref="IDbConnection"/> to use.</param>
-        /// <param name="transaction">The <see cref="IDbTransaction"/> to use.</param>
-        protected void EvictToSize(long maxSize, IDbConnection connection, IDbTransaction transaction)
+        private void EvictToSize(long maxSize, IDbConnection connection, IDbTransaction transaction)
         {
             const string Sql =
 @"SELECT
@@ -479,7 +363,7 @@ LIMIT 100;";
                             new { Key = item.Key, Size = item.Size },
                             transaction).First();
 
-                        this.DeleteStoredContent(item.Key);
+                        this.storage.DeleteStoredContent(item.Key);
 
                         if (stats.Size <= maxSize)
                         {
@@ -501,14 +385,7 @@ LIMIT 100;";
             }
         }
 
-        /// <summary>
-        /// Gets the item with the given key from the cache.
-        /// Returns null if the item is not found.
-        /// </summary>
-        /// <param name="key">The key of the item to get.</param>
-        /// <param name="transaction">The transaction to use, if applicable.</param>
-        /// <returns>A cache item, or null if none is found.</returns>
-        protected CacheItem GetItem(string key, IDbTransaction transaction)
+        private CacheItem GetItem(string key, IDbTransaction transaction)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -521,12 +398,30 @@ FROM [ParlayItem]
 WHERE
     [Key] = @Key;";
 
-            using (IDbConnection connection = this.CreateAndOpenConnection())
+            using (IDbConnection connection = this.storage.CreateAndOpenConnection())
             {
                 return connection.Query<CacheItem>(
                     Sql,
                     new { Key = key.ToUpperInvariant() },
                     transaction).FirstOrDefault();
+            }
+        }
+
+        private void RemoveContent(string key, IDbConnection connection, IDbTransaction transaction)
+        {
+            CacheItem item = this.GetItem(key, null);
+
+            if (item != null)
+            {
+                CacheStatistics stats = connection.Query<CacheStatistics>(
+                        SqliteCache.RemoveSql,
+                        new { Key = item.Key, Size = item.Size },
+                        transaction).First();
+
+                this.storage.DeleteStoredContent(item.Key);
+
+                this.itemCount = stats.ItemCount;
+                this.size = stats.Size;
             }
         }
     }

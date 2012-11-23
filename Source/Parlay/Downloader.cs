@@ -26,7 +26,7 @@ namespace Parlay
         /// Initializes a new instance of the Downloader class.
         /// </summary>
         public Downloader()
-            : this(CacheProfile.Memory(104857600))
+            : this(CacheProfile.Memory())
         {
         }
 
@@ -64,6 +64,16 @@ namespace Parlay
         /// Gets the maximum number of concurrent downloads allowed.
         /// </summary>
         public int MaxConcurrentDownloads { get; private set; }
+
+        internal int ProcessingCount
+        {
+            get { return this.processing.Count; }
+        }
+
+        internal int QueuedCount
+        {
+            get { return this.queued.Count; }
+        }
 
         /// <summary>
         /// Cancels a pending or in-progress download operation.
@@ -178,7 +188,7 @@ namespace Parlay
 
         private static ICache CreateCache(CacheProfile cacheProfile)
         {
-            cacheProfile = cacheProfile ?? CacheProfile.Memory(104857600);
+            cacheProfile = cacheProfile ?? CacheProfile.Memory();
 
             switch (cacheProfile.CacheType)
             {
@@ -238,7 +248,7 @@ namespace Parlay
         {
             lock (this.syncRoot)
             {
-                if (this.MaxConcurrentDownloads > 0 && this.processing.Count > this.MaxConcurrentDownloads)
+                if (this.MaxConcurrentDownloads > 0 && this.processing.Count >= this.MaxConcurrentDownloads)
                 {
                     this.queued.Add(task);
                 }

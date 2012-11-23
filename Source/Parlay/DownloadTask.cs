@@ -61,14 +61,9 @@ namespace Parlay
             {
                 if (!this.finished)
                 {
-                    if (this.started && this.webClient.IsBusy)
-                    {
-                        this.webClient.CancelAsync();
-                    }
-                    else
-                    {
-                        this.Finish(null, null, true);
-                    }
+                    this.webClient.DownloadDataCompleted -= this.WebClientDownloadDataCompleted;
+                    this.webClient.CancelAsync();
+                    this.Finish(null, null, true);
                 }
             }
         }
@@ -112,8 +107,12 @@ namespace Parlay
                     {
                         this.started = false;
                         this.finished = true;
-                        this.webClient.Dispose();
-                        this.webClient = null;
+
+                        if (this.webClient != null)
+                        {
+                            this.webClient.Dispose();
+                            this.webClient = null;
+                        }
                     }
                 }
 

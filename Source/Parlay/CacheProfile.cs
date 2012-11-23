@@ -35,6 +35,17 @@ namespace Parlay
 
         /// <summary>
         /// Creates a new <see cref="CacheProfile"/> that identifies an on-disk
+        /// cache pointing to the given local path.
+        /// </summary>
+        /// <param name="localPath">The path to a local directory to use for cache storage.</param>
+        /// <returns>A new <see cref="CacheProfile"/>.</returns>
+        public static CacheProfile Disk(string localPath)
+        {
+            return CacheProfile.Disk(localPath, 104857600);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="CacheProfile"/> that identifies an on-disk
         /// cache pointing to the given local path with the given maximum size.
         /// </summary>
         /// <param name="localPath">The path to a local directory to use for cache storage.</param>
@@ -48,6 +59,15 @@ namespace Parlay
                 LocalPath = localPath,
                 MaximumSize = maxSize
             };
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="CacheProfile"/> that identifies an in-memory cache.
+        /// </summary>
+        /// <returns>A new <see cref="CacheProfile"/>.</returns>
+        public static CacheProfile Memory()
+        {
+            return CacheProfile.Memory(104857600);
         }
 
         /// <summary>
